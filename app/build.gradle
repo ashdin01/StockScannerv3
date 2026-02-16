@@ -41,6 +41,6 @@ android {
 
 dependencies {
     // BouncyCastle for self-signed TLS cert generation at runtime
-    implementation 'org.bouncycastle:bcpkix-jvm15on:1.68'
+    iimplementation 'org.bouncycastle:bcpkix-jvm15on:1.68'
     implementation 'org.bouncycastle:bcprov-jvm15on:1.68'
 }
