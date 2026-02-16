@@ -1,5 +1,8 @@
 #!/bin/sh
-# Gradle wrapper script
-exec "$(dirname "$0")/gradle/wrapper/gradle-wrapper.jar" "$@" 2>/dev/null || \
-  gradle "$@" 2>/dev/null || \
-  echo "Please install Gradle or Android Studio and run: ./gradlew assembleDebug"
+APP_NAME="Gradle"
+APP_BASE_NAME=`basename "$0"`
+APP_HOME=`dirname "$0"`
+APP_HOME=`cd "$APP_HOME" && pwd`
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+JAVACMD="${JAVA_HOME}/bin/java"
+exec "$JAVACMD" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
