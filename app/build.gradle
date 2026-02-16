@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.stockscan'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.stockscan"
+        minSdk 24
+        targetSdk 34
+        versionCode 2
+        versionName "2.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+        debug {
+            applicationIdSuffix ""
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        // BouncyCastle includes some files that conflict — exclude them
+        exclude 'META-INF/BCKEY.DSA'
+        exclude 'META-INF/BCKEY.SF'
+        exclude 'META-INF/BC2048KE.DSA'
+        exclude 'META-INF/BC2048KE.SF'
+        exclude 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+    }
+}
+
+dependencies {
+    // BouncyCastle for self-signed TLS cert generation at runtime
+    implementation 'org.bouncycastle:bcpkix-jvm15on:1.68'
+    implementation 'org.bouncycastle:bcprov-jvm15on:1.68'
+}

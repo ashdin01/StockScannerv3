@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>StockScan</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:       #1565C0;
+      --blue-light: #1976D2;
+      --blue-dark:  #0D47A1;
+      --blue-glow:  rgba(21,101,192,0.35);
+      --green:      #2E7D32;
+      --green-light:#43A047;
+      --red:        #C62828;
+      --bg:         #F4F6FB;
+      --card:       #FFFFFF;
+      --text:       #1A1A2E;
+      --muted:      #6B7280;
+      --border:     #E2E8F0;
+      --radius:     14px;
+      --shadow:     0 4px 24px rgba(21,101,192,0.10);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ─── SPLASH SCREEN ─── */
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0A1628;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+    }
+    #splash.hidden { display: none; }
+
+    /* animated grid */
+    #splash::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(21,101,192,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21,101,192,0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridScroll 20s linear infinite;
+      pointer-events: none;
+    }
+    #splash::after {
+      content: '';
+      position: absolute;
+      top: 30%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(21,101,192,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    @keyframes gridScroll {
+      from { background-position: 0 0; }
+      to   { background-position: 40px 40px; }
+    }
+
+    .splash-inner {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-mark {
+      display: flex; align-items: flex-end; gap: 4px;
+      margin-bottom: 28px;
+      animation: fadeDown 0.6s ease both;
+    }
+    .bar { width: 6px; background: #90CAF9; border-radius: 2px; opacity: 0.9; }
+    .bar:nth-child(1)  { height: 44px; }
+    .bar:nth-child(2)  { height: 56px; width: 4px; opacity: 0.7; }
+    .bar:nth-child(3)  { height: 64px; width: 8px; }
+    .bar:nth-child(4)  { height: 48px; width: 3px; opacity: 0.6; }
+    .bar:nth-child(5)  { height: 60px; width: 7px; }
+    .bar:nth-child(6)  { height: 40px; width: 4px; opacity: 0.7; }
+    .bar:nth-child(7)  { height: 64px; width: 6px; }
+    .bar:nth-child(8)  { height: 52px; width: 3px; opacity: 0.6; }
+    .bar:nth-child(9)  { height: 44px; width: 5px; }
+    .bar:nth-child(10) { height: 58px; width: 8px; opacity: 0.8; }
+
+    .splash-title-block {
+      text-align: center; margin-bottom: 48px;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+    .splash-title {
+      font-size: 3.8rem; font-weight: 900;
+      letter-spacing: 3px; text-transform: uppercase; line-height: 1;
+      background: linear-gradient(135deg, #90CAF9, #FFFFFF 50%, #90CAF9);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .splash-subtitle {
+      font-size: 0.8rem; font-weight: 600;
+      letter-spacing: 4px; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); margin-top: 6px;
+    }
+
+    .splash-btn {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      width: 100%; max-width: 340px;
+      padding: 20px 28px;
+      background: linear-gradient(135deg, #0D47A1, #1976D2);
+      color: #fff; border: none; border-radius: 16px;
+      font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset,
+                  0 8px 32px rgba(21,101,192,0.35),
+                  0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      animation: fadeUp 0.6s 0.2s ease both;
+      position: relative; overflow: hidden;
+    }
+    .splash-btn::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      transition: left 0.5s ease;
+    }
+    .splash-btn:hover::before { left: 160%; }
+    .splash-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .splash-btn:active { transform: scale(0.98); }
+    .splash-btn svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+    .splash-version {
+      margin-top: 20px; font-size: 0.72rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 1px;
+      animation: fadeUp 0.6s 0.35s ease both;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── MAIN APP ─── */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+    #app.hidden { display: none; }
+
+    header {
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue-light));
+      color: #fff;
+      padding: 14px 18px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(13,71,161,0.25);
+      flex-shrink: 0; z-index: 10;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo svg { width: 28px; height: 28px; }
+    .logo-text { font-size: 1.35rem; font-weight: 700; letter-spacing: 0.5px; }
+    .logo-sub { font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
+    #scan-count-badge {
+      background: rgba(255,255,255,0.20);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 0.85rem; font-weight: 600;
+    }
+
+    .tabs {
+      display: flex; background: #fff;
+      border-bottom: 2px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; padding: 13px 6px 11px;
+      border: none; background: transparent;
+      font-size: 0.82rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: color 0.2s;
+      border-bottom: 3px solid transparent;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .tab.active { color: var(--blue); border-bottom: 3px solid var(--blue); background: #F0F5FF; }
+    .tab svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .view { display: none; flex: 1; overflow-y: auto; flex-direction: column; }
+    .view.active { display: flex; }
+
+    /* ─── SCANNER VIEW ─── */
+    #scanner-view { align-items: stretch; gap: 0; padding: 0; }
+
+    .scanner-box {
+      background: #000; position: relative;
+      width: 100%; aspect-ratio: 4/3; max-height: 52vh;
+      overflow: hidden; flex-shrink: 0;
+    }
+    #video-el { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #scan-canvas { display: none; }
+
+    .scan-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .scan-frame {
+      width: 80%; max-width: 300px; height: 100px;
+      border: 3px solid rgba(255,255,255,0.85);
+      border-radius: 12px;
+      box-shadow: 0 0 0 3000px rgba(0,0,0,0.35);
+      position: relative;
+    }
+    .scan-line {
+      position: absolute; left: 0; right: 0; top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00E5FF, #00E5FF, transparent);
+      animation: scanline 2s ease-in-out infinite;
+    }
+    @keyframes scanline {
+      0%, 100% { top: 15%; opacity: 0.9; }
+      50% { top: 85%; opacity: 1; }
+    }
+    .scan-hint {
+      position: absolute; bottom: 10px; left: 0; right: 0;
+      text-align: center; color: rgba(255,255,255,0.85);
+      font-size: 0.78rem; font-weight: 500;
+    }
+
+    /* Engine badge */
+    .engine-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.55); color: #90CAF9;
+      border-radius: 8px; padding: 3px 8px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; pointer-events: none;
+    }
+
+    .scanner-controls {
+      padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .detected-bar {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      min-height: 62px; box-shadow: var(--shadow);
+    }
+    .detected-icon svg { width: 24px; height: 24px; }
+    .detected-content { flex: 1; min-width: 0; }
+    .detected-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .detected-code {
+      font-size: 1.1rem; font-weight: 700; color: var(--blue);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .detected-count-badge {
+      background: var(--blue); color: #fff;
+      border-radius: 20px; padding: 4px 14px;
+      font-size: 0.9rem; font-weight: 700; white-space: nowrap;
+    }
+    .detected-count-badge.new { background: var(--green-light); }
+
+    .btn {
+      border: none; border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%;
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.85; }
+    .btn-primary { background: var(--blue); color: #fff; box-shadow: 0 3px 12px rgba(21,101,192,0.30); }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-success { background: var(--green); color: #fff; box-shadow: 0 3px 12px rgba(46,125,50,0.25); }
+    .btn-outline { background: transparent; border: 2px solid var(--blue); color: var(--blue); }
+    .btn svg { width: 20px; height: 20px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .manual-row { display: flex; gap: 8px; }
+    .manual-input {
+      flex: 1; border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 12px 14px;
+      font-size: 0.95rem; outline: none; background: var(--card);
+      transition: border-color 0.2s;
+    }
+    .manual-input:focus { border-color: var(--blue); }
+    .btn-manual {
+      border-radius: var(--radius); border: none;
+      background: var(--blue); color: #fff;
+      font-weight: 700; padding: 12px 18px;
+      font-size: 0.95rem; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ─── INFO BANNER ─── */
+    .info-banner {
+      background: #E3F2FD; border: 1.5px solid #90CAF9;
+      border-radius: var(--radius); padding: 12px 14px;
+      font-size: 0.80rem; color: #0D47A1; line-height: 1.5;
+      display: none;
+    }
+    .info-banner.show { display: block; }
+    .info-banner b { font-weight: 700; }
+
+    /* ─── LIST VIEW ─── */
+    #list-view { padding: 14px 14px 80px; gap: 10px; }
+    .list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2px 4px;
+    }
+    .list-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .list-meta { font-size: 0.78rem; color: var(--muted); }
+    #barcode-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .barcode-item {
+      background: var(--card); border-radius: var(--radius);
+      border: 1.5px solid var(--border); padding: 13px 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(-8px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .item-icon {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #EEF4FF;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .item-icon svg { width: 18px; height: 18px; color: var(--blue); }
+    .item-info { flex: 1; min-width: 0; }
+    .item-code {
+      font-size: 0.95rem; font-weight: 700;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .item-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .item-count {
+      background: var(--blue-dark); color: #fff;
+      border-radius: 20px; padding: 5px 14px;
+      font-weight: 800; font-size: 1rem;
+      min-width: 40px; text-align: center;
+    }
+    .item-del {
+      background: #FEE2E2; border: none; border-radius: 8px;
+      padding: 6px 8px; cursor: pointer; color: var(--red);
+      display: flex; align-items: center;
+    }
+    .item-del svg { width: 16px; height: 16px; }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--muted);
+    }
+    .empty-state svg { width: 54px; height: 54px; opacity: 0.35; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.95rem; }
+
+    /* ─── EXPORT VIEW ─── */
+    #export-view { padding: 16px 14px 80px; gap: 12px; }
+    .export-card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1.5px solid var(--border); padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .export-card h3 {
+      font-size: 0.95rem; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .export-card h3 svg { width: 18px; height: 18px; color: var(--blue); }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box {
+      background: var(--bg); border-radius: 10px; padding: 12px 14px; text-align: center;
+    }
+    .stat-val { font-size: 1.6rem; font-weight: 800; color: var(--blue); }
+    .stat-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
+    .export-preview {
+      background: #F8F9FA; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; font-family: monospace; font-size: 0.78rem; color: #333;
+      max-height: 130px; overflow-y: auto; white-space: pre;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #1A1A2E; color: #fff;
+      padding: 10px 22px; border-radius: 24px;
+      font-size: 0.88rem; font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 1000; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    .flash {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.55);
+      pointer-events: none; z-index: 999;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .flash.show { opacity: 1; }
+
+    .confirm-dialog {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2000; padding: 24px;
+    }
+    .confirm-box {
+      background: #fff; border-radius: var(--radius); padding: 24px;
+      width: 100%; max-width: 320px; text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    }
+    .confirm-box h3 { margin-bottom: 10px; font-size: 1.1rem; }
+    .confirm-box p { color: var(--muted); font-size: 0.88rem; margin-bottom: 20px; }
+    .confirm-buttons { display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     SPLASH SCREEN
+═══════════════════════════════════ -->
+<div id="splash">
+  <div class="splash-inner">
+    <div class="logo-mark">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <div class="splash-title-block">
+      <div class="splash-title">StockScan</div>
+      <div class="splash-subtitle">Stocktake Manager</div>
+    </div>
+    <button class="splash-btn" onclick="enterApp()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 7V1h-6M1 7V1h6M23 17v6h-6M1 17v6h6"/>
+        <rect x="7" y="7" width="10" height="10" rx="1"/>
+      </svg>
+      Open Barcode Scanner
+    </button>
+    <div class="splash-version">V2 &nbsp;·&nbsp; EAN-13 &nbsp;·&nbsp; Standalone</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     MAIN APP
+═══════════════════════════════════ -->
+<div id="app" class="hidden">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="2"  y="4" width="3"  height="20" rx="1" fill="white"/>
+        <rect x="7"  y="4" width="2"  height="20" rx="1" fill="white" opacity=".8"/>
+        <rect x="11" y="4" width="4"  height="20" rx="1" fill="white"/>
+        <rect x="17" y="4" width="2"  height="20" rx="1" fill="white" opacity=".8"/>
+        <rect x="21" y="4" width="3"  height="20" rx="1" fill="white"/>
+        <rect x="1"  y="1" width="26" height="3"  rx="1" fill="#90CAF9"/>
+        <rect x="1"  y="24" width="26" height="3" rx="1" fill="#90CAF9"/>
+      </svg>
+      <div>
+        <div class="logo-text">StockScan</div>
+        <div class="logo-sub">Stocktake Manager</div>
+      </div>
+    </div>
+    <div id="scan-count-badge">0 scans</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-scanner" onclick="switchTab('scanner',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 7V1h-6M1 7V1h6M23 17v6h-6M1 17v6h6"/>
+        <rect x="7" y="7" width="10" height="10" rx="1"/>
+      </svg>
+      Scanner
+    </button>
+    <button class="tab" id="tab-list" onclick="switchTab('list',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <circle cx="3" cy="6"  r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="12" r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="18" r="1.5" fill="currentColor"/>
+      </svg>
+      <span id="tab-list-label">Items (0)</span>
+    </button>
+    <button class="tab" id="tab-export" onclick="switchTab('export',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export
+    </button>
+  </div>
+
+  <!-- SCANNER VIEW -->
+  <div id="scanner-view" class="view active">
+    <div class="scanner-box">
+      <video id="video-el" autoplay playsinline muted></video>
+      <canvas id="scan-canvas"></canvas>
+      <div class="scan-overlay">
+        <div class="scan-frame">
+          <div class="scan-line"></div>
+        </div>
+      </div>
+      <div class="scan-hint">Align barcode within the frame</div>
+      <div class="engine-badge" id="engine-badge">Initialising…</div>
+    </div>
+
+    <div class="scanner-controls">
+
+      <!-- Info banner for camera permission tips -->
+      <div class="info-banner" id="info-banner">
+        <b>📷 Camera permission needed.</b> When prompted, tap <b>Allow</b> to grant camera access.
+        If blocked, open Chrome settings → Site Settings → Camera → allow this page.
+        You can also use <b>manual entry</b> below at any time.
+      </div>
+
+      <div class="detected-bar">
+        <div class="detected-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="2">
+            <rect x="3" y="4" width="2" height="16" rx=".5"/>
+            <rect x="7" y="4" width="1.5" height="16" rx=".5"/>
+            <rect x="10.5" y="4" width="3" height="16" rx=".5"/>
+            <rect x="15.5" y="4" width="1.5" height="16" rx=".5"/>
+            <rect x="19" y="4" width="2" height="16" rx=".5"/>
+          </svg>
+        </div>
+        <div class="detected-content">
+          <div class="detected-label">Last Scanned</div>
+          <div class="detected-code" id="last-scanned">— Waiting for scan —</div>
+        </div>
+        <div class="detected-count-badge" id="last-count" style="display:none"></div>
+      </div>
+
+      <button class="btn btn-primary" id="scan-btn" onclick="toggleScanner()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4" fill="white"/>
+        </svg>
+        <span id="scan-btn-text">Start Camera</span>
+      </button>
+
+      <div class="manual-row">
+        <input class="manual-input" id="manual-input" type="number"
+               inputmode="numeric" placeholder="Enter barcode manually…" />
+        <button class="btn-manual" onclick="addManual()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="list-view" class="view">
+    <div class="list-header">
+      <span class="list-title">Scanned Items</span>
+      <span class="list-meta" id="list-meta">No items yet</span>
+    </div>
+    <div id="barcode-list">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="2" height="16" rx=".5"/>
+          <rect x="7" y="4" width="1.5" height="16" rx=".5"/>
+          <rect x="10.5" y="4" width="3" height="16" rx=".5"/>
+          <rect x="15.5" y="4" width="1.5" height="16" rx=".5"/>
+          <rect x="19" y="4" width="2" height="16" rx=".5"/>
+        </svg>
+        <p>No barcodes scanned yet.</p>
+      </div>
+    </div>
+    <button class="btn btn-danger" onclick="confirmClear()"
+            style="margin-top: auto; flex-shrink:0; margin: 12px 0 0;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+      </svg>
+      Clear All Data
+    </button>
+  </div>
+
+  <!-- EXPORT VIEW -->
+  <div id="export-view" class="view">
+    <div class="export-card">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M9 21V9"/>
+        </svg>
+        Session Summary
+      </h3>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="stat-unique">0</div>
+          <div class="stat-lbl">Unique Items</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-lbl">Total Scans</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-card">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        CSV Preview
+      </h3>
+      <div class="export-preview" id="csv-preview">No data yet.</div>
+    </div>
+
+    <button class="btn btn-success" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download CSV File
+    </button>
+
+    <button class="btn btn-outline" onclick="exportTXT()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Download TXT File
+    </button>
+  </div>
+
+</div><!-- /app -->
+
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast"></div>
+
+<div class="confirm-dialog" id="confirm-dialog" style="display:none">
+  <div class="confirm-box">
+    <h3>⚠️ Clear All Data?</h3>
+    <p>This will permanently delete all scanned barcodes and counts from this session.</p>
+    <div class="confirm-buttons">
+      <button class="btn btn-outline" onclick="closeConfirm()" style="flex:1; padding:12px;">Cancel</button>
+      <button class="btn btn-danger"  onclick="clearAll()"    style="flex:1; padding:12px;">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SPLASH → APP TRANSITION
+═══════════════════════════════════════════════════════════ */
+function enterApp() {
+  document.getElementById('splash').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let barcodes = {};
+let scanning = false;
+let stream   = null;
+let scanLoop = null;
+let detector = null;
+let useNativeDetector = false;
+
+// Debounce / consecutive-read settings
+let lastAcceptedCode = null;
+let debounceTimer    = null;
+let consecutiveCode  = null;
+let consecutiveCount = 0;
+const CONSECUTIVE_NEEDED = 2;
+const DEBOUNCE_MS        = 2000;
+
+/* ═══════════════════════════════════════════════════════════
+   DETECTOR INIT — prefers native BarcodeDetector,
+   falls back to a pure-JS EAN-13 decoder
+═══════════════════════════════════════════════════════════ */
+async function initDetector() {
+  if ('BarcodeDetector' in window) {
+    try {
+      const formats = await BarcodeDetector.getSupportedFormats();
+      if (formats.includes('ean_13')) {
+        detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'code_39'] });
+        useNativeDetector = true;
+        setEngineBadge('Native API');
+        return;
+      }
+    } catch(e) { /* fall through */ }
+  }
+  // Fall back to pure-JS EAN-13
+  useNativeDetector = false;
+  setEngineBadge('JS Decoder');
+}
+
+function setEngineBadge(label) {
+  const b = document.getElementById('engine-badge');
+  if (b) b.textContent = label;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════════ */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(name + '-view').classList.add('active');
+  el.classList.add('active');
+  if (name === 'list')   renderList();
+  if (name === 'export') renderExport();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCANNER
+═══════════════════════════════════════════════════════════ */
+function toggleScanner() {
+  if (scanning) stopScanner();
+  else          startScanner();
+}
+
+async function startScanner() {
+  const btn     = document.getElementById('scan-btn');
+  const btnText = document.getElementById('scan-btn-text');
+
+  btn.disabled  = true;
+  btnText.textContent = 'Starting camera…';
+
+  // Show permission hint
+  document.getElementById('info-banner').classList.add('show');
+
+  // Make sure detector is ready
+  if (!detector && !useNativeDetector) await initDetector();
+  if (!detector && !useNativeDetector) { /* pure-JS path, no pre-init needed */ }
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    });
+
+    document.getElementById('info-banner').classList.remove('show');
+
+    const video = document.getElementById('video-el');
+    video.srcObject = stream;
+    await video.play();
+
+    scanning = true;
+    btn.disabled  = false;
+    btn.className = 'btn btn-danger';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="4" y="4" width="16" height="16" rx="2" fill="white"/></svg>
+      <span id="scan-btn-text">Stop Camera</span>`;
+
+    startScanLoop();
+
+  } catch (err) {
+    btn.disabled = false;
+    btnText.textContent = 'Start Camera';
+    const msg = err.name === 'NotAllowedError'
+      ? 'Camera permission denied. Please allow camera access and try again.'
+      : 'Camera error: ' + (err.message || err.name);
+    showToast(msg);
+    // Leave the info-banner visible for guidance
+  }
+}
+
+function stopScanner() {
+  if (scanLoop) { clearInterval(scanLoop); scanLoop = null; }
+  if (stream)   { stream.getTracks().forEach(t => t.stop()); stream = null; }
+
+  const video = document.getElementById('video-el');
+  video.srcObject = null;
+
+  scanning = false;
+  const btn = document.getElementById('scan-btn');
+  btn.className = 'btn btn-primary';
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white"/>
+    </svg><span id="scan-btn-text">Start Camera</span>`;
+}
+
+function startScanLoop() {
+  const video  = document.getElementById('video-el');
+  const canvas = document.getElementById('scan-canvas');
+  const ctx    = canvas.getContext('2d', { willReadFrequently: true });
+
+  scanLoop = setInterval(async () => {
+    if (!scanning || video.readyState < 2) return;
+
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    try {
+      if (useNativeDetector && detector) {
+        const results = await detector.detect(canvas);
+        for (const r of results) {
+          handleCode(r.rawValue);
+        }
+      } else {
+        // Pure-JS EAN-13 path
+        const imgData = ctx.getImageData(
+          0,
+          Math.floor(canvas.height * 0.35),
+          canvas.width,
+          Math.floor(canvas.height * 0.30)
+        );
+        const code = decodeEAN13(imgData);
+        if (code) handleCode(code);
+      }
+    } catch(e) { /* ignore decode errors */ }
+
+  }, 200); // ~5 fps — enough for steady scanning
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HANDLE DETECTED CODE (debounce + consecutive logic)
+═══════════════════════════════════════════════════════════ */
+function handleCode(code) {
+  if (!code || !/^\d{13}$/.test(code)) return;
+  if (debounceTimer) return;
+
+  if (code === consecutiveCode) {
+    consecutiveCount++;
+  } else {
+    consecutiveCode  = code;
+    consecutiveCount = 1;
+  }
+  if (consecutiveCount < CONSECUTIVE_NEEDED) return;
+
+  consecutiveCode  = null;
+  consecutiveCount = 0;
+  debounceTimer = setTimeout(() => { debounceTimer = null; }, DEBOUNCE_MS);
+
+  addBarcode(code);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PURE-JS EAN-13 DECODER (row-scan approach)
+   Works on the middle 30% of the camera frame.
+═══════════════════════════════════════════════════════════ */
+const EAN_L = [
+  [0,0,0,1,1,0,1],[0,0,1,1,0,0,1],[0,0,1,0,0,1,1],[0,1,1,1,1,0,1],
+  [0,1,0,0,0,1,1],[0,1,1,0,0,0,1],[0,1,0,1,1,1,1],[0,1,1,1,0,1,1],
+  [0,1,1,0,1,1,1],[0,0,0,1,0,1,1]
+];
+const EAN_G = EAN_L.map(p => [...p].reverse());
+const EAN_R = EAN_L.map(p => p.map(b => b^1));
+
+// First-digit parity table for EAN-13
+const FIRST_DIGIT_PARITY = [
+  'LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG',
+  'LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'
+];
+
+function decodeEAN13(imageData) {
+  const { data, width, height } = imageData;
+
+  // Sample several horizontal rows near the centre
+  const rowsToCheck = [0.3, 0.4, 0.5, 0.6, 0.7].map(f => Math.floor(height * f));
+
+  for (const row of rowsToCheck) {
+    const result = tryDecodeRow(data, width, row);
+    if (result) return result;
+  }
+  return null;
+}
+
+function tryDecodeRow(data, width, row) {
+  // Build greyscale row
+  const grey = new Uint8Array(width);
+  const base = row * width * 4;
+  for (let x = 0; x < width; x++) {
+    const i = base + x * 4;
+    grey[x] = (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114) | 0;
+  }
+
+  // Adaptive threshold (Otsu-lite: mean of min+max halves)
+  let minV = 255, maxV = 0;
+  for (let x = 0; x < width; x++) {
+    if (grey[x] < minV) minV = grey[x];
+    if (grey[x] > maxV) maxV = grey[x];
+  }
+  const threshold = (minV + maxV) >> 1;
+
+  // Binary row
+  const binary = new Uint8Array(width);
+  for (let x = 0; x < width; x++) binary[x] = grey[x] < threshold ? 0 : 1;
+
+  // Run-length encode
+  const runs = [];
+  let cur = binary[0], len = 1;
+  for (let x = 1; x < width; x++) {
+    if (binary[x] === cur) { len++; }
+    else { runs.push({ v: cur, l: len }); cur = binary[x]; len = 1; }
+  }
+  runs.push({ v: cur, l: len });
+
+  // Need at least 59 runs for a full EAN-13 (3+6*4+5+6*4+3 = 59 bar transitions min)
+  if (runs.length < 59) return null;
+
+  // Try to find start guard (narrow black–white–black)
+  for (let i = 0; i < runs.length - 58; i++) {
+    if (runs[i].v !== 0) continue;
+    const unit = runs[i].l;
+    if (unit < 1) continue;
+
+    // Check start guard: B(1) W(1) B(1)
+    if (!approx(runs[i].l,   unit, 0.5)) continue;
+    if (!approx(runs[i+1].l, unit, 0.5)) continue;
+    if (!approx(runs[i+2].l, unit, 0.5)) continue;
+
+    // Decode left group (6 digits, L or G encoding)
+    const left = [];
+    let parityString = '';
+    let idx = i + 3;
+    for (let d = 0; d < 6; d++) {
+      if (idx + 3 >= runs.length) return null;
+      // Each digit = 4 runs (b,w,b,w or w,b,w,b patterns mapped to 7 modules)
+      const bars = [runs[idx], runs[idx+1], runs[idx+2], runs[idx+3]];
+      idx += 4;
+      const decoded = matchDigit(bars, unit);
+      if (!decoded) return null;
+      left.push(decoded.digit);
+      parityString += decoded.parity;
+    }
+
+    // Middle guard: W(1) B(1) W(1) B(1) W(1)
+    if (idx + 4 >= runs.length) return null;
+    if (!approx(runs[idx].l,   unit, 0.5)) continue;
+    if (!approx(runs[idx+1].l, unit, 0.5)) continue;
+    if (!approx(runs[idx+2].l, unit, 0.5)) continue;
+    if (!approx(runs[idx+3].l, unit, 0.5)) continue;
+    if (!approx(runs[idx+4].l, unit, 0.5)) continue;
+    idx += 5;
+
+    // Decode right group (6 digits, R encoding)
+    const right = [];
+    for (let d = 0; d < 6; d++) {
+      if (idx + 3 >= runs.length) return null;
+      const bars = [runs[idx], runs[idx+1], runs[idx+2], runs[idx+3]];
+      idx += 4;
+      const decoded = matchDigitR(bars, unit);
+      if (!decoded) return null;
+      right.push(decoded);
+    }
+
+    // Determine first digit from parity
+    let firstDigit = -1;
+    for (let fd = 0; fd <= 9; fd++) {
+      if (FIRST_DIGIT_PARITY[fd] === parityString) { firstDigit = fd; break; }
+    }
+    if (firstDigit === -1) continue;
+
+    const fullCode = String(firstDigit) + left.join('') + right.join('');
+    if (fullCode.length !== 13) continue;
+    if (!validateEAN13(fullCode)) continue;
+    return fullCode;
+  }
+  return null;
+}
+
+function approx(val, unit, tolerance) {
+  // val should be within tolerance*unit of unit
+  return Math.abs(val - unit) <= tolerance * unit + 1;
+}
+
+function matchDigit(bars, unit) {
+  // bars = 4 runs making 7 modules; try L and G encoding
+  const mods = barsToModules(bars, unit, 7);
+  if (!mods) return null;
+  for (let d = 0; d <= 9; d++) {
+    if (arrEq(mods, EAN_L[d])) return { digit: d, parity: 'L' };
+    if (arrEq(mods, EAN_G[d])) return { digit: d, parity: 'G' };
+  }
+  return null;
+}
+
+function matchDigitR(bars, unit) {
+  const mods = barsToModules(bars, unit, 7);
+  if (!mods) return null;
+  for (let d = 0; d <= 9; d++) {
+    if (arrEq(mods, EAN_R[d])) return d;
+  }
+  return null;
+}
+
+function barsToModules(bars, unit, totalMods) {
+  const mods = [];
+  for (const bar of bars) {
+    const n = Math.round(bar.l / unit);
+    if (n < 1 || n > 4) return null;
+    for (let m = 0; m < n; m++) mods.push(bar.v ^ 0); // 0=black,1=white but we flip
+  }
+  // Normalise: first bar of a digit starts black
+  return mods.length === totalMods ? mods : null;
+}
+
+function arrEq(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function validateEAN13(code) {
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(code[i]) * (i % 2 === 0 ? 1 : 3);
+  }
+  const check = (10 - (sum % 10)) % 10;
+  return check === parseInt(code[12]);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BARCODE LOGIC
+═══════════════════════════════════════════════════════════ */
+function addBarcode(code) {
+  const now  = new Date();
+  const isNew = !barcodes[code];
+  if (isNew) {
+    barcodes[code] = { count: 1, firstSeen: now, lastSeen: now };
+  } else {
+    barcodes[code].count++;
+    barcodes[code].lastSeen = now;
+  }
+  flashScreen();
+  vibrate();
+  updateLastScanned(code, barcodes[code].count, isNew);
+  updateBadge();
+}
+
+function addManual() {
+  const input = document.getElementById('manual-input');
+  const code  = input.value.trim();
+  if (!code) { showToast('Please enter a barcode number'); return; }
+  addBarcode(code);
+  input.value = '';
+  showToast(`Added: ${code}`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UI UPDATES
+═══════════════════════════════════════════════════════════ */
+function updateLastScanned(code, count, isNew) {
+  document.getElementById('last-scanned').textContent = code;
+  const badge = document.getElementById('last-count');
+  badge.style.display = 'block';
+  badge.textContent   = `×${count}`;
+  badge.className     = 'detected-count-badge' + (isNew ? ' new' : '');
+  showToast(isNew ? `New item: ${code}` : `Updated: ${code} (×${count})`);
+}
+
+function updateBadge() {
+  const total  = Object.values(barcodes).reduce((s, v) => s + v.count, 0);
+  const unique = Object.keys(barcodes).length;
+  document.getElementById('scan-count-badge').textContent = `${total} scan${total !== 1 ? 's' : ''}`;
+  document.getElementById('tab-list-label').textContent   = `Items (${unique})`;
+}
+
+function flashScreen() {
+  const f = document.getElementById('flash');
+  f.classList.add('show');
+  setTimeout(() => f.classList.remove('show'), 150);
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate(80);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LIST RENDER
+═══════════════════════════════════════════════════════════ */
+function renderList() {
+  const container = document.getElementById('barcode-list');
+  const meta      = document.getElementById('list-meta');
+  const keys      = Object.keys(barcodes);
+
+  if (keys.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="4" width="2" height="16" rx=".5"/><rect x="7" y="4" width="1.5" height="16" rx=".5"/>
+        <rect x="10.5" y="4" width="3" height="16" rx=".5"/><rect x="15.5" y="4" width="1.5" height="16" rx=".5"/>
+        <rect x="19" y="4" width="2" height="16" rx=".5"/>
+      </svg>
+      <p>No barcodes scanned yet.</p>
+    </div>`;
+    meta.textContent = 'No items yet';
+    return;
+  }
+
+  const sorted = keys.sort((a, b) => barcodes[b].count - barcodes[a].count);
+  const total  = sorted.reduce((s, k) => s + barcodes[k].count, 0);
+  meta.textContent = `${keys.length} item${keys.length !== 1 ? 's' : ''} · ${total} total scans`;
+
+  container.innerHTML = sorted.map(code => {
+    const item = barcodes[code];
+    const time = formatTime(item.lastSeen);
+    return `
+      <div class="barcode-item" id="item-${CSS.escape(code)}">
+        <div class="item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="2" height="16" rx=".5"/><rect x="7" y="4" width="1.5" height="16" rx=".5"/>
+            <rect x="10.5" y="4" width="3" height="16" rx=".5"/><rect x="15.5" y="4" width="1.5" height="16" rx=".5"/>
+            <rect x="19" y="4" width="2" height="16" rx=".5"/>
+          </svg>
+        </div>
+        <div class="item-info">
+          <div class="item-code">${escHtml(code)}</div>
+          <div class="item-time">Last scanned: ${time}</div>
+        </div>
+        <div class="item-count">×${item.count}</div>
+        <button class="item-del" onclick="deleteItem('${escAttr(code)}')" title="Remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>`;
+  }).join('');
+}
+
+function deleteItem(code) {
+  delete barcodes[code];
+  updateBadge();
+  renderList();
+  showToast('Item removed');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORT
+═══════════════════════════════════════════════════════════ */
+function renderExport() {
+  const keys  = Object.keys(barcodes);
+  const total = keys.reduce((s, k) => s + barcodes[k].count, 0);
+  document.getElementById('stat-unique').textContent = keys.length;
+  document.getElementById('stat-total').textContent  = total;
+
+  const preview = document.getElementById('csv-preview');
+  if (keys.length === 0) { preview.textContent = 'No data yet.'; return; }
+  const csv   = buildCSV();
+  const lines = csv.split('\n');
+  const shown = lines.slice(0, Math.min(9, lines.length));
+  if (lines.length > 9) shown.push(`… (${lines.length - 9} more rows)`);
+  preview.textContent = shown.join('\n');
+}
+
+function buildCSV() {
+  const sorted = Object.keys(barcodes).sort((a, b) => barcodes[b].count - barcodes[a].count);
+  let csv = 'Barcode,Count,First Scanned,Last Scanned\n';
+  sorted.forEach(code => {
+    const item = barcodes[code];
+    csv += `"${code}",${item.count},"${formatDateFull(item.firstSeen)}","${formatDateFull(item.lastSeen)}"\n`;
+  });
+  return csv;
+}
+
+function exportCSV() {
+  if (Object.keys(barcodes).length === 0) { showToast('No data to export'); return; }
+  downloadFile(buildCSV(), 'text/csv', `stockscan_${dateStamp()}.csv`);
+  showToast('CSV downloaded!');
+}
+
+function exportTXT() {
+  if (Object.keys(barcodes).length === 0) { showToast('No data to export'); return; }
+  const sorted = Object.keys(barcodes).sort((a, b) => barcodes[b].count - barcodes[a].count);
+  const total  = sorted.reduce((s, k) => s + barcodes[k].count, 0);
+  let txt = `STOCKTAKE REPORT\nGenerated: ${formatDateFull(new Date())}\n${'─'.repeat(42)}\n`;
+  txt += `${'BARCODE'.padEnd(20)} ${'COUNT'.padStart(8)}\n${'─'.repeat(42)}\n`;
+  sorted.forEach(code => {
+    txt += `${code.padEnd(20)} ${String(barcodes[code].count).padStart(8)}\n`;
+  });
+  txt += `${'─'.repeat(42)}\nTOTAL SCANS: ${total.toString().padStart(26)}\nUNIQUE ITEMS: ${sorted.length.toString().padStart(25)}\n`;
+  downloadFile(txt, 'text/plain', `stockscan_${dateStamp()}.txt`);
+  showToast('TXT downloaded!');
+}
+
+function downloadFile(content, mimeType, filename) {
+  const blob = new Blob([content], { type: mimeType });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLEAR
+═══════════════════════════════════════════════════════════ */
+function confirmClear() {
+  if (Object.keys(barcodes).length === 0) { showToast('Nothing to clear'); return; }
+  document.getElementById('confirm-dialog').style.display = 'flex';
+}
+function closeConfirm() {
+  document.getElementById('confirm-dialog').style.display = 'none';
+}
+function clearAll() {
+  barcodes = {};
+  lastAcceptedCode = null;
+  document.getElementById('last-scanned').textContent   = '— Waiting for scan —';
+  document.getElementById('last-count').style.display   = 'none';
+  updateBadge();
+  renderList();
+  closeConfirm();
+  showToast('All data cleared');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+function formatTime(d)     { return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
+function formatDateFull(d) { return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
+function dateStamp() {
+  const d = new Date();
+  return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes());
+}
+function pad(n)       { return String(n).padStart(2,'0'); }
+function escHtml(s)   { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s)   { return s.replace(/'/g,"\\'"); }
+
+/* Manual input: allow Enter key */
+document.getElementById('manual-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addManual();
+});
+
+/* Pre-init the barcode detector while user is on splash screen */
+initDetector();
+</script>
+</body>
+</html>
