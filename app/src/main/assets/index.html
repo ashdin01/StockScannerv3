@@ -834,7 +834,7 @@ function startScanLoop() {
    HANDLE DETECTED CODE (debounce + consecutive logic)
 ═══════════════════════════════════════════════════════════ */
 function handleCode(code) {
-  if (!code || !/^\d{13}$/.test(code)) return;
+  if (!code || !/^\d{8}$/.test(code) && !/^\d{13}$/.test(code)) return;
   if (debounceTimer) return;
 
   if (code === consecutiveCode) {
