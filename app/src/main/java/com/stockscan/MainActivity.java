@@ -11,9 +11,12 @@ import android.webkit.WebChromeClient;
 import android.webkit.JavascriptInterface;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.ContentValues;
+import android.content.ContentResolver;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.widget.Toast;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -44,32 +47,45 @@ public class MainActivity extends Activity {
             @JavascriptInterface
             public void saveFile(String filename, String content) {
                 try {
-                    File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                    File file = new File(dir, filename);
-                    FileOutputStream fos = new FileOutputStream(file);
-                    fos.write(content.getBytes());
-                    fos.close();
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this,
-                        "Saved to Downloads: " + filename, Toast.LENGTH_LONG).show());
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+                    values.put(MediaStore.Downloads.MIME_TYPE, 
+                        filename.endsWith(".csv") ? "text/csv" : "text/plain");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, 
+                        Environment.DIRECTORY_DOWNLOADS);
+
+                    ContentResolver resolver = getContentResolver();
+                    Uri uri = resolver.insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+                    if (uri != null) {
+                        OutputStream out = resolver.openOutputStream(uri);
+                        out.write(content.getBytes());
+                        out.close();
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                            "Saved to Downloads: " + filename, 
+                            Toast.LENGTH_LONG).show());
+                    }
                 } catch (Exception e) {
                     runOnUiThread(() -> Toast.makeText(MainActivity.this,
-                        "Save failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        "Save failed: " + e.getMessage(), 
+                        Toast.LENGTH_LONG).show());
                 }
             }
         }, "Android");
 
-        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{
-                Manifest.permission.CAMERA,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            }, CAMERA_PERMISSION_REQUEST);
+        if (checkSelfPermission(Manifest.permission.CAMERA) 
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, 
+                CAMERA_PERMISSION_REQUEST);
         } else {
             webView.loadUrl("file:///android_asset/index.html");
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, 
+            String[] permissions, int[] grantResults) {
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             webView.loadUrl("file:///android_asset/index.html");
         }
