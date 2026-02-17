@@ -1172,22 +1172,31 @@ function buildCSV() {
 
 function exportCSV() {
   if (Object.keys(barcodes).length === 0) { showToast('No data to export'); return; }
-  downloadFile(buildCSV(), 'text/csv', `stockscan_${dateStamp()}.csv`);
-  showToast('CSV downloaded!');
+  const content = buildCSV();
+  const filename = 'stockscan_' + dateStamp() + '.csv';
+  if (window.Android) {
+    Android.saveFile(filename, content);
+  } else {
+    downloadFile(content, 'text/csv', filename);
+  }
 }
 
 function exportTXT() {
   if (Object.keys(barcodes).length === 0) { showToast('No data to export'); return; }
   const sorted = Object.keys(barcodes).sort((a, b) => barcodes[b].count - barcodes[a].count);
-  const total  = sorted.reduce((s, k) => s + barcodes[k].count, 0);
+  const total = sorted.reduce((s, k) => s + barcodes[k].count, 0);
   let txt = `STOCKTAKE REPORT\nGenerated: ${formatDateFull(new Date())}\n${'─'.repeat(42)}\n`;
   txt += `${'BARCODE'.padEnd(20)} ${'COUNT'.padStart(8)}\n${'─'.repeat(42)}\n`;
   sorted.forEach(code => {
     txt += `${code.padEnd(20)} ${String(barcodes[code].count).padStart(8)}\n`;
   });
   txt += `${'─'.repeat(42)}\nTOTAL SCANS: ${total.toString().padStart(26)}\nUNIQUE ITEMS: ${sorted.length.toString().padStart(25)}\n`;
-  downloadFile(txt, 'text/plain', `stockscan_${dateStamp()}.txt`);
-  showToast('TXT downloaded!');
+  const filename = 'stockscan_' + dateStamp() + '.txt';
+  if (window.Android) {
+    Android.saveFile(filename, txt);
+  } else {
+    downloadFile(txt, 'text/plain', filename);
+  }
 }
 
 function downloadFile(content, mimeType, filename) {
